@@ -22,6 +22,14 @@ def init_files():
             with open(filepath, "w") as f:
                 json.dump(default_val, f, indent=4)
 
+    # initialize the output dir/files
+    if not os.path.exists(OUTPUT_DIR):
+        os.makedirs(OUTPUT_DIR)
+
+    output_filepath = os.path.join(OUTPUT_DIR, "monthly_bill.json")
+    if not os.path.exists(output_filepath):
+        with open(output_filepath, "w") as f:
+            json.dump([], f, indent=4)
 
 class CustomRequestHandler(BaseHTTPRequestHandler):
 
