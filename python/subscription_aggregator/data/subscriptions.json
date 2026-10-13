@@ -1,0 +1,5 @@
+[
+  {"id":"sub_1092aB","merchant_id":"merch_55","amount_cents":4999,"currency":"usd","status":"active","metadata":{"plan_tier":"pro"}},
+  {"id":"sub_1093aC","merchant_id":"merch_56","amount_cents":1999,"currency":"usd","status":"active","metadata":{"plan_tier":"basic"}},
+  {"id":"sub_1094aD","merchant_id":"merch_57","amount_cents":2999,"currency":"usd","status":"canceled","metadata":{"plan_tier":"standard"}}
+]
