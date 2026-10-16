@@ -1,10 +1,15 @@
 import json
+import os
+import tempfile
 import time
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 DATA_FILE = Path(__file__).resolve().parent / 'data' / 'subscriptions.json'
+REPORT_FILE = Path(__file__).resolve().parent / 'data' / 'received_customer_report.json'
+MAX_BODY_BYTES = 1024 * 1024
 HOST = '0.0.0.0'
 PORT = 8000
 
@@ -26,6 +31,55 @@ def load_subscriptions():
     return sorted(subscriptions, key=lambda item: item['id'])
 
 
+def validate_reports(reports):
+    if not isinstance(reports, list):
+        raise ValueError('Request body must be a JSON array')
+    required = {'customer_id', 'report_date', 'active_subscriptions', 'total_cost', 'currency'}
+    for i, report in enumerate(reports):
+        if not isinstance(report, dict) or set(report) != required:
+            raise ValueError(f'Report {i} must contain exactly: {", ".join(sorted(required))}')
+        if not isinstance(report['customer_id'], str) or not report['customer_id'].strip():
+            raise ValueError(f'Report {i}: customer_id must be a nonempty string')
+        if not isinstance(report['report_date'], str):
+            raise ValueError(f'Report {i}: report_date must be a string')
+        try:
+            parsed = datetime.strptime(report['report_date'], '%Y-%m-%d %H:%M:%S %z')
+            if parsed.utcoffset() is None:
+                raise ValueError('Timezone required')
+        except ValueError:
+            raise ValueError(f'Report {i}: invalid report_date') from None
+        subs = report['active_subscriptions']
+        if not isinstance(subs, list) or any(not isinstance(x, str) or not x for x in subs):
+            raise ValueError(f'Report {i}: active_subscriptions must be a list of nonempty strings')
+        if type(report['total_cost']) is not int or report['total_cost'] < 0:
+            raise ValueError(f'Report {i}: total_cost must be a nonnegative integer')
+        if not isinstance(report['currency'], str) or len(report['currency']) != 3 or not report['currency'].isalpha():
+            raise ValueError(f'Report {i}: currency must be a three-letter code')
+
+
+def append_reports(reports):
+    REPORT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    if REPORT_FILE.exists():
+        with REPORT_FILE.open(encoding='utf-8') as f:
+            existing = json.load(f)
+        if not isinstance(existing, list):
+            raise ValueError('Existing report file must contain a JSON array')
+    else:
+        existing = []
+    # Atomic replacement prevents truncation if writing fails.
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile('w', encoding='utf-8', dir=REPORT_FILE.parent,
+                                         prefix='.customer_reports_', suffix='.tmp', delete=False) as f:
+            temp_path = Path(f.name)
+            json.dump(existing + reports, f, indent=2)
+            f.write('\n')
+        os.replace(temp_path, REPORT_FILE)
+    finally:
+        if temp_path is not None and temp_path.exists():
+            temp_path.unlink()
+
+
 SUBSCRIPTIONS = load_subscriptions()
 INDEX_BY_ID = {item['id']: i for i, item in enumerate(SUBSCRIPTIONS)}
 
@@ -42,6 +96,39 @@ class SubscriptionHandler(BaseHTTPRequestHandler):
             self.send_header(name, value)
         self.end_headers()
         self.wfile.write(body)
+
+    def do_POST(self):
+        path = urlsplit(self.path).path
+        if path == '/api/v1/subscription':
+            return self.send_json(405, {'error': 'Method not allowed'}, {'Allow': 'GET'})
+        if path != '/api/v1/customer_report':
+            return self.send_json(404, {'error': 'Not found'})
+
+        try:
+            if urlsplit(self.path).query:
+                raise ValueError('Query parameters are not supported')
+            if self.headers.get('Content-Type', '').split(';')[0].strip().lower() != 'application/json':
+                return self.send_json(415, {'error': 'Content-Type must be application/json'})
+            raw_length = self.headers.get('Content-Length')
+            if raw_length is None or not raw_length.isascii() or not raw_length.isdecimal():
+                raise ValueError('Valid Content-Length is required')
+            length = int(raw_length)
+            if length == 0:
+                raise ValueError('Request body must not be empty')
+            if length > MAX_BODY_BYTES:
+                return self.send_json(413, {'error': 'Request body too large'})
+            reports = json.loads(self.rfile.read(length))
+            validate_reports(reports)
+        except (ValueError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            print(f'Invalid customer report: {exc}', flush=True)
+            return self.send_json(400, {'error': str(exc)})
+
+        try:
+            append_reports(reports)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            print(f'Failed to save customer report: {exc}', flush=True)
+            return self.send_json(500, {'error': 'Unable to save customer reports'})
+        return self.send_json(201, {'message': 'Reports saved', 'count': len(reports)})
 
     def do_GET(self):
         url = urlsplit(self.path)

@@ -1,5 +1,14 @@
 [
-  {"id":"sub_1092aB","merchant_id":"merch_55","amount_cents":4999,"currency":"usd","status":"active","metadata":{"plan_tier":"pro"}},
-  {"id":"sub_1093aC","merchant_id":"merch_56","amount_cents":1999,"currency":"usd","status":"active","metadata":{"plan_tier":"basic"}},
-  {"id":"sub_1094aD","merchant_id":"merch_57","amount_cents":2999,"currency":"usd","status":"canceled","metadata":{"plan_tier":"standard"}}
+  {"customer_id":"cust_A","id":"sub_1092aB","merchant_id":"merch_55","amount_cents":4999,"currency":"usd","status":"active","metadata":{"plan_tier":"pro"}},
+  {"customer_id":"cust_A","id":"sub_1093aC","merchant_id":"merch_56","amount_cents":1999,"currency":"usd","status":"active","metadata":{"plan_tier":"basic"}},
+  {"customer_id":"cust_A","id":"sub_1094aD","merchant_id":"merch_57","amount_cents":2999,"currency":"usd","status":"canceled","metadata":{"plan_tier":"standard"}},
+  {"customer_id":"cust_B","id":"sub_1095bE","merchant_id":"merch_58","amount_cents":3999,"currency":"usd","status":"active","metadata":{"plan_tier":"premium"}},
+  {"customer_id":"cust_B","id":"sub_1096bF","merchant_id":"merch_59","amount_cents":5999,"currency":"usd","status":"canceled","metadata":{"plan_tier":"enterprise"}},
+  {"customer_id":"cust_B","id":"sub_1097bG","merchant_id":"merch_60","amount_cents":6999,"currency":"usd","status":"active","metadata":{"plan_tier":"pro"}},
+  {"customer_id":"cust_C","id":"sub_1098cH","merchant_id":"merch_61","amount_cents":7999,"currency":"usd","status":"active","metadata":{"plan_tier":"basic"}},
+  {"customer_id":"cust_C","id":"sub_1099cI","merchant_id":"merch_62","amount_cents":8999,"currency":"usd","status":"canceled","metadata":{"plan_tier":"standard"}},
+  {"customer_id":"cust_C","id":"sub_1100cJ","merchant_id":"merch_63","amount_cents":9999,"currency":"usd","status":"active","metadata":{"plan_tier":"premium"}},
+  {"customer_id":"cust_D","id":"sub_1101dK","merchant_id":"merch_64","amount_cents":10999,"currency":"usd","status":"canceled","metadata":{"plan_tier":"enterprise"}},
+  {"customer_id":"cust_D","id":"sub_1092dB","merchant_id":"merch_55","amount_cents":4999,"currency":"usd","status":"active","metadata":{"plan_tier":"pro"}},
+  {"customer_id":"cust_E","id":"sub_1093eßC","merchant_id":"merch_56","amount_cents":1999,"currency":"usd","status":"active","metadata":{"plan_tier":"basic"}}
 ]
